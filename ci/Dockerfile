@@ -3,8 +3,10 @@ FROM debian:bookworm-slim
 
 ARG GO_VERSION=1.26.4
 ARG GO_SHA256_LINUX_AMD64=1153d3d50e0ac764b447adfe05c2bcf08e889d42a02e0fe0259bd47f6733ad7f
-ARG CHE_VERSION=v0.0.12
-ARG RENDER_TPL_VERSION=v0.0.6
+ARG CHE_VERSION=0.0.14
+ARG CHE_SHA256_LINUX_AMD64=d145e7d0197a3198109551c8833f53aaea80a063b61bc023d3773e58dbd97cda
+ARG RENDER_TPL_VERSION=0.0.7
+ARG RENDER_TPL_SHA256_LINUX_AMD64=15b4464212a2ccafbb17ea1448386f1c6f533d3fcf9e24c76022c74356c2853f
 ARG LEFTHOOK_VERSION=2.1.9
 ARG LEFTHOOK_SHA256_LINUX_AMD64=0d60b0d350c923963729574f6431171f0277788884ad0c6284fa0160c36e3877
 ARG YQ_VERSION=v4.53.3
@@ -18,6 +20,7 @@ ENV GOPATH=/usr/local/go-tools
 ENV GOROOT=/usr/local/go
 ENV PATH=/usr/local/go/bin:/usr/local/go-tools/bin:/usr/local/bin:$PATH
 ENV CLICOLOR=0
+ENV TF_PLUGIN_CACHE_DIR=/usr/local/terraform.d/plugin-cache
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -40,7 +43,7 @@ RUN set -eux; \
     ln -sf /usr/local/go/bin/go /usr/local/bin/go; \
     ln -sf /usr/local/go/bin/gofmt /usr/local/bin/gofmt
 
-#[why] lefthook + yq publish prebuilt binaries; fetch+checksum instead of go install (no source compile of their dep trees)
+#[why] prebuilt bins, not go install: skip compiling their dep trees
 RUN set -eux; \
     curl -fsSL -o /usr/local/bin/lefthook "https://github.com/evilmartians/lefthook/releases/download/v${LEFTHOOK_VERSION}/lefthook_${LEFTHOOK_VERSION}_Linux_x86_64"; \
     echo "${LEFTHOOK_SHA256_LINUX_AMD64}  /usr/local/bin/lefthook" | sha256sum -c -; \
@@ -49,14 +52,18 @@ RUN set -eux; \
     echo "${YQ_SHA256_LINUX_AMD64}  /usr/local/bin/yq" | sha256sum -c -; \
     chmod +x /usr/local/bin/yq
 
-#[why] che + render-tpl are own modules (CGO: tree-sitter + 1Password sdk); no published binaries, must compile
+#[why] prebuilt tarballs from the package registry, not go install: skip che's slow CGO build (tree-sitter + 1Password sdk)
 RUN set -eux; \
-    install -d -m 0777 "$GOPATH"; \
-    export GOMODCACHE=/tmp/go-mod GOCACHE=/tmp/go-build CC=clang; \
-    go install "gitlab.com/konradodwrot/go/che@${CHE_VERSION}"; \
-    go install "gitlab.com/konradodwrot/go/render-files/cmd/render-tpl@${RENDER_TPL_VERSION}"; \
-    chmod -R a+rX "$GOPATH" /usr/local/go; \
-    rm -rf /tmp/go-mod /tmp/go-build
+    che_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo%2Fche/packages/generic/che/${CHE_VERSION}"; \
+    curl -fsSL -o /tmp/che.tar.gz "${che_base}/che_${CHE_VERSION}_linux_amd64.tar.gz"; \
+    echo "${CHE_SHA256_LINUX_AMD64}  /tmp/che.tar.gz" | sha256sum -c -; \
+    tar -xz -C /usr/local/bin -f /tmp/che.tar.gz che; \
+    rm /tmp/che.tar.gz; \
+    rt_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo%2Frender-files/packages/generic/render-files/${RENDER_TPL_VERSION}"; \
+    curl -fsSL -o /tmp/render-tpl.tar.gz "${rt_base}/render-tpl_${RENDER_TPL_VERSION}_linux_amd64.tar.gz"; \
+    echo "${RENDER_TPL_SHA256_LINUX_AMD64}  /tmp/render-tpl.tar.gz" | sha256sum -c -; \
+    tar -xz -C /usr/local/bin -f /tmp/render-tpl.tar.gz render-tpl; \
+    rm /tmp/render-tpl.tar.gz
 
 RUN set -eux; \
     arch="$(uname -m)"; \
@@ -72,6 +79,15 @@ RUN set -eux; \
     curl -fsSL -o /tmp/terraform.zip "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_${arch}.zip"; \
     unzip -d /usr/local/bin /tmp/terraform.zip; \
     rm /tmp/terraform.zip
+
+#[why] seed the plugin cache so consumers' 'terraform init' copies providers from disk, no re-download; seed files rendered from git-repos by che (docsgen), tracking its lock
+COPY ci/terraform-providers.tf /tmp/tf-cache-seed/versions.tf
+COPY ci/terraform.lock.hcl /tmp/tf-cache-seed/.terraform.lock.hcl
+RUN set -eux; \
+    mkdir -p "$TF_PLUGIN_CACHE_DIR"; \
+    terraform -chdir=/tmp/tf-cache-seed init -input=false -backend=false; \
+    chmod -R a+rX "$TF_PLUGIN_CACHE_DIR"; \
+    rm -rf /tmp/tf-cache-seed
 
 RUN set -eux; \
     arch="$(dpkg --print-architecture)"; \

@@ -9,6 +9,12 @@ repo:
           - source: templates/2-data/repo-structure.md.repo.tpl
             dest:
               - {path: assets/data/repo-structure.md}
+          - source: templates/2-data/terraform-providers.tf.repo.tpl
+            dest:
+              - {path: ci/terraform-providers.tf}
+          - source: templates/2-data/terraform.lock.hcl.repo.tpl
+            dest:
+              - {path: ci/terraform.lock.hcl}
           - source: templates/3-audience/AGENTS.md.repo.tpl
             dest:
               - {path: CLAUDE.md}

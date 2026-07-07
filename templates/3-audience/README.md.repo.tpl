@@ -42,13 +42,13 @@ The image is public-pullable (public repo), so cross-project pulls need no auth.
 ## Versions
 
 Tool pins live in one place: `ci/tool-versions.env`. Bump there; the kaniko job
-passes each as a `--build-arg` into `Dockerfile`. This is the single source of
+passes each as a `--build-arg` into `ci/Dockerfile`. This is the single source of
 truth for CI-image tool versions (host provisioning still lives in
 `configs/ci/zsh/scripts/installs/00-ci-deps.zsh`).
 
 ## Build
 
-CI builds the image with kaniko on changes to `Dockerfile` / `ci/tool-versions.env`,
+CI builds the image with kaniko on changes to `ci/Dockerfile` / `ci/tool-versions.env`,
 on `main`, or manually. See `.gitlab-ci.yml`.
 
 ## License
