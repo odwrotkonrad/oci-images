@@ -3,9 +3,10 @@
 SHELL := zsh
 .SHELLFLAGS := -c
 
+WRAPPERS :=
 COMMANDS := render-templates run-repo-ci-prepare-hooks run-repo-ci-precommit-all
 
-.PHONY: $(COMMANDS)
+.PHONY: $(WRAPPERS) $(COMMANDS)
 
 ##[>] Docs [genai-include]
 #[what] render *.repo.tpl onto the repo (makefile.agents.md, repo-structure.md, CLAUDE.md, AGENTS.md, README.md)

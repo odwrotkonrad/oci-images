@@ -6,7 +6,9 @@ provider "registry.terraform.io/gitlabhq/gitlab" {
   version     = "18.11.0"
   constraints = "~> 18.0"
   hashes = [
+    "h1:6PVj4IOQjyPiizwpPV9NOhhWXiOUQ/pWhDDkS4g8KSw=",
     "h1:6twdN97qk2HFQSu41KwKjzNKZP7XGYvwIk1JZUdm0B8=",
+    "h1:ermJ0poZTOWXLQRmGDgESji1CdSqkkEyyoaRlZVaZQo=",
     "zh:00f04e37c82976bb80d93ab605d44a5bff99135a03df018ad5223894f3669339",
     "zh:2fa5c52fe34791fa3b4ab02690cda4be8d9bded4b703575c2542f98fce60f302",
     "zh:307a0498a1cfe9eb69e18362a5362fc02393bba38c3e2febbab4a5bb0335ea76",
@@ -28,6 +30,8 @@ provider "registry.terraform.io/integrations/github" {
   version     = "6.12.1"
   constraints = "~> 6.0"
   hashes = [
+    "h1:bGz4LIep/7PVrqy6P8cTYbAJpdxXGrupUJjkCczlzIs=",
+    "h1:ghFGRYa6LdR4BjW0Fe8HXKI0ZmA1bTrwjhXDeZG7+3E=",
     "h1:hHOwf554tYL9pQS2uRPbaAGSXRbbBJ/+HtQAoT9mtuA=",
     "zh:3e1a4081ecb9518fdf0074db83c16ad00dc81ffe8249a6e3cf1894e947e28df6",
     "zh:4cb8224b7f530795b674ac044675f6b22a7c9154f55eb9f76c5af6c7534056a4",
