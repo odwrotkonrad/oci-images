@@ -27,18 +27,6 @@ a cached image pull.
 - Public-pullable, so cross-project pulls need no auth.
 - Fast pipelines: no per-job compile of che, no per-job tool downloads.
 
-## How To Use
-
-Consumers pin `registry.gitlab.com/konradodwrot/infra/ci-images/ci-linux:bookworm`
-as their job `image:`. Bump a tool by editing `ci/tool-versions.env`; CI rebuilds
-and republishes the image via Docker buildx.
-
-## Future Direction
-
-- Multi-arch (arm64) linux image if a runner needs it.
-- A darwin image only if a self-hosted Tart runner is adopted (SaaS macOS
-  runners cannot use custom images).
-
 # Conventions
 
 - `conventions/purpose/convention.md`: every repo carries `assets/docs-agents/purpose.md` with five headings (what, why, goals, usage, future), included at the top of `AGENTS.md`, `CLAUDE.md`, `README.md`.
