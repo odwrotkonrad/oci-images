@@ -1,12 +1,18 @@
-# ci-images
+# oci-images
 
-Shared CI container images for the `konradodwrot` repos.
+Shared OCI container images for the `konradodwrot` repos.
 
 {{ renderMarkdown "assets/docs-agents/purpose.md" "normalize-headings" }}
 
-## Image
+## Images
 
-`registry.gitlab.com/konradodwrot/infra/ci-images/ci-linux:bookworm`
+Both images are multi-arch (linux/arm64 + linux/amd64), same tags:
+`:vX.Y.Z` (immutable release consumers pin), `:bookworm` (moving pinned ref),
+`:latest` (moving), `:$CI_COMMIT_SHORT_SHA` (immutable).
+
+### ci-linux
+
+`registry.gitlab.com/konradodwrot/infra/oci-images/ci-linux:bookworm`
 
 `FROM debian:bookworm-slim`, baking the shared CI toolchain so consuming jobs
 skip the per-pipeline `apt-get` + `go install` + `curl` bootstrap:
@@ -23,13 +29,22 @@ skip the per-pipeline `apt-get` + `go install` + `curl` bootstrap:
 | terraform | IaC (infra/git-repos) |
 | glab | GitLab CLI |
 
-Tags: `:bookworm` (pinned ref consumers use), `:latest` (moving), `:$CI_COMMIT_SHORT_SHA` (immutable).
+### dev-sandbox
+
+`registry.gitlab.com/konradodwrot/infra/oci-images/dev-sandbox:bookworm`
+
+`FROM ci-linux` (same pipeline's build), cloning the public `configs` repo at a
+pinned SHA (`CONFIGS_SHA` build arg, current `main` head at build time) and
+running the full che install: `run-sync-full`, `cli/linux` profile, op://
+secret renders skipped. The result is a ready config-baked dev shell (zsh,
+che-loaded dotfiles, no secrets), pulled by the `sandbox` repo for local
+session pods.
 
 ## Consume
 
 ```yaml
 variables:
-  CI_IMAGE: registry.gitlab.com/konradodwrot/infra/ci-images/ci-linux:bookworm
+  CI_IMAGE: registry.gitlab.com/konradodwrot/infra/oci-images/ci-linux:bookworm
 
 validate-pre-commit-all:
   image: $CI_IMAGE
@@ -37,19 +52,20 @@ validate-pre-commit-all:
     - make run-repo-ci-precommit-all
 ```
 
-The image is public-pullable (public repo), so cross-project pulls need no auth.
+The images are public-pullable (public repo), so cross-project pulls need no auth.
 
 ## Versions
 
 Tool pins live in one place: `ci/tool-versions.env`. Bump there; the file is
-`COPY`-ed into the build and sourced per `RUN` in `ci/Dockerfile`. This is the
+`COPY`-ed into the build and sourced per `RUN` in `ci/ci-linux/Dockerfile`. This is the
 single source of truth for CI-image tool versions (host provisioning still lives in
 `configs/ci/zsh/scripts/installs/00-ci-deps.zsh`).
 
 ## Build
 
-CI builds the image with Docker buildx on changes to `ci/Dockerfile` / `ci/tool-versions.env`,
-on `main`, or manually. See `.gitlab-ci.yml`.
+CI builds both images with Docker buildx on changes to the Dockerfiles /
+`ci/tool-versions.env`, on `main`, or manually; `dev-sandbox` builds `FROM` the
+`ci-linux` published in the same pipeline. See `.gitlab-ci.yml`.
 
 ## License
 

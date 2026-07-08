@@ -12,6 +12,7 @@ stages:
 
 variables:
   CI_LINUX_IMAGE: $CI_REGISTRY_IMAGE/ci-linux
+  DEV_SANDBOX_IMAGE: $CI_REGISTRY_IMAGE/dev-sandbox
 
 build-ci-linux-image:
   stage: build-image
@@ -29,7 +30,7 @@ build-ci-linux-image:
       when: never
     - if: $CI_COMMIT_TAG
     - changes:
-        - ci/Dockerfile
+        - ci/ci-linux/Dockerfile
         - ci/tool-versions.env
         - ci/terraform-providers.tf
         - ci/terraform.lock.hcl
@@ -44,13 +45,63 @@ build-ci-linux-image:
     - VERSION_TAG="${CI_COMMIT_TAG:-bookworm}"
   script:
     - docker buildx build
-        --file "$CI_PROJECT_DIR/ci/Dockerfile"
+        --file "$CI_PROJECT_DIR/ci/ci-linux/Dockerfile"
+        --platform linux/arm64,linux/amd64
         --tag "$CI_LINUX_IMAGE:$VERSION_TAG"
         --tag "$CI_LINUX_IMAGE:bookworm"
         --tag "$CI_LINUX_IMAGE:latest"
         --tag "$CI_LINUX_IMAGE:$CI_COMMIT_SHORT_SHA"
         --cache-from "type=registry,ref=$CI_LINUX_IMAGE-cache"
         --cache-to "type=registry,ref=$CI_LINUX_IMAGE-cache,mode=max"
+        --push
+        "$CI_PROJECT_DIR"
+
+build-dev-sandbox-image:
+  stage: build-image
+  needs:
+    - job: build-ci-linux-image
+      optional: true
+  image: docker:27-cli
+  services:
+    - docker:27-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_CERT_PATH: "/certs/client"
+    DOCKER_TLS_VERIFY: "1"
+  rules:
+    - if: $CI_MERGE_REQUEST_DRAFT == "true"
+      when: never
+    - if: $CI_COMMIT_TAG
+    - changes:
+        - ci/ci-linux/Dockerfile
+        - ci/dev-sandbox/Dockerfile
+        - ci/tool-versions.env
+        - ci/terraform-providers.tf
+        - ci/terraform.lock.hcl
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - when: manual
+      allow_failure: true
+  before_script:
+    - apk add --no-cache git
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - docker context create dind --docker "host=$DOCKER_HOST,ca=$DOCKER_CERT_PATH/ca.pem,cert=$DOCKER_CERT_PATH/cert.pem,key=$DOCKER_CERT_PATH/key.pem"
+    - docker buildx create --use --driver docker-container dind
+    - VERSION_TAG="${CI_COMMIT_TAG:-bookworm}"
+    #[why] pin the baked configs checkout to the current main head: cache-busts on config change, records what was baked
+    - CONFIGS_SHA=$(git ls-remote https://gitlab.com/konradodwrot/configs.git main | cut -f1)
+  script:
+    - docker buildx build
+        --file "$CI_PROJECT_DIR/ci/dev-sandbox/Dockerfile"
+        --platform linux/arm64,linux/amd64
+        --build-arg "BASE_IMAGE=$CI_LINUX_IMAGE:$VERSION_TAG"
+        --build-arg "CONFIGS_SHA=$CONFIGS_SHA"
+        --tag "$DEV_SANDBOX_IMAGE:$VERSION_TAG"
+        --tag "$DEV_SANDBOX_IMAGE:bookworm"
+        --tag "$DEV_SANDBOX_IMAGE:latest"
+        --tag "$DEV_SANDBOX_IMAGE:$CI_COMMIT_SHORT_SHA"
+        --cache-from "type=registry,ref=$DEV_SANDBOX_IMAGE-cache"
+        --cache-to "type=registry,ref=$DEV_SANDBOX_IMAGE-cache,mode=max"
         --push
         "$CI_PROJECT_DIR"
 
@@ -87,5 +138,5 @@ release:
   script:
     - NEXT=$(sh ci/next-version.sh)
     - echo "releasing $NEXT"
-    - glab release create "$NEXT" --name "ci-images $NEXT" --ref "$CI_COMMIT_SHA" --notes "ci-images $NEXT"
+    - glab release create "$NEXT" --name "oci-images $NEXT" --ref "$CI_COMMIT_SHA" --notes "oci-images $NEXT"
 ##[<] 🤖🤖🤖
