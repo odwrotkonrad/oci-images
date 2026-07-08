@@ -59,8 +59,29 @@ build-ci-linux-image-amd64:
         --push
         "$CI_PROJECT_DIR"
 
-#[why] arm64 builds run on the local tart runner (native Apple Silicon linux VM), not the shared amd64 runners: qemu emulation there is 10x slower. cirruslabs ubuntu guest, admin/admin ssh, docker installed at job start
-.build-image-arm64:
+#[why] qemu on the shared runners is fine for ci-linux (downloads, no compile): keep it there with buildx
+build-ci-linux-image-arm64:
+  extends: .build-image
+  needs: []
+  rules:
+    - if: $CI_MERGE_REQUEST_DRAFT == "true"
+      when: never
+    - when: manual
+      allow_failure: true
+  script:
+    - docker buildx build
+        --file "$CI_PROJECT_DIR/ci/ci-linux/Dockerfile"
+        --platform linux/arm64
+        --tag "$CI_LINUX_IMAGE:$VERSION_TAG-arm64"
+        --tag "$CI_LINUX_IMAGE:latest-arm64"
+        --tag "$CI_LINUX_IMAGE:$CI_COMMIT_SHORT_SHA-arm64"
+        --cache-from "type=registry,ref=$CI_LINUX_IMAGE-cache-arm64"
+        --cache-to "type=registry,ref=$CI_LINUX_IMAGE-cache-arm64,mode=max"
+        --push
+        "$CI_PROJECT_DIR"
+
+#[why] the dev-sandbox bake (brew + che sync) is qemu-hostile: run arm64 on the local tart runner, native Apple Silicon linux VM. cirruslabs ubuntu guest, admin/admin ssh, docker installed at job start
+.build-image-arm64-local:
   stage: build-image
   tags: [local]
   image: ghcr.io/cirruslabs/ubuntu:latest
@@ -76,20 +97,6 @@ build-ci-linux-image-amd64:
     - command -v docker >/dev/null || { sudo apt-get update && sudo apt-get install -y docker.io; }
     - echo "$CI_REGISTRY_PASSWORD" | sudo docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - VERSION_TAG="${CI_COMMIT_TAG:-latest}"
-
-build-ci-linux-image-arm64:
-  extends: .build-image-arm64
-  needs: []
-  script:
-    - sudo docker build
-        --file "$CI_PROJECT_DIR/ci/ci-linux/Dockerfile"
-        --tag "$CI_LINUX_IMAGE:$VERSION_TAG-arm64"
-        --tag "$CI_LINUX_IMAGE:latest-arm64"
-        --tag "$CI_LINUX_IMAGE:$CI_COMMIT_SHORT_SHA-arm64"
-        "$CI_PROJECT_DIR"
-    - sudo docker push "$CI_LINUX_IMAGE:$VERSION_TAG-arm64"
-    - sudo docker push "$CI_LINUX_IMAGE:latest-arm64"
-    - sudo docker push "$CI_LINUX_IMAGE:$CI_COMMIT_SHORT_SHA-arm64"
 
 .build-dev-sandbox:
   extends: .build-image
@@ -122,7 +129,7 @@ build-dev-sandbox-image-amd64:
         "$CI_PROJECT_DIR"
 
 build-dev-sandbox-image-arm64:
-  extends: .build-image-arm64
+  extends: .build-image-arm64-local
   needs:
     - job: build-ci-linux-image-arm64
       optional: true
