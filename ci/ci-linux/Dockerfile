@@ -54,12 +54,12 @@ RUN set -eux; \
       arm64) plat=linux_arm64; chesha="$CHE_SHA256_LINUX_ARM64"; rtsha="$RENDER_TPL_SHA256_LINUX_ARM64" ;; \
       *) echo "unsupported arch: $arch" >&2; exit 1 ;; \
     esac; \
-    che_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo%2Fche/packages/generic/che/${CHE_VERSION}"; \
+    che_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che/${CHE_VERSION}"; \
     curl -fsSL -o /tmp/che.tar.gz "${che_base}/che_${CHE_VERSION}_${plat}.tar.gz"; \
     echo "${chesha}  /tmp/che.tar.gz" | sha256sum -c -; \
     tar -xz -C /usr/local/bin -f /tmp/che.tar.gz che; \
     rm /tmp/che.tar.gz; \
-    rt_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo%2Frender-files/packages/generic/render-files/${RENDER_TPL_VERSION}"; \
+    rt_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che/${RENDER_TPL_VERSION}"; \
     curl -fsSL -o /tmp/render-tpl.tar.gz "${rt_base}/render-tpl_${RENDER_TPL_VERSION}_${plat}.tar.gz"; \
     echo "${rtsha}  /tmp/render-tpl.tar.gz" | sha256sum -c -; \
     tar -xz -C /usr/local/bin -f /tmp/render-tpl.tar.gz render-tpl; \
