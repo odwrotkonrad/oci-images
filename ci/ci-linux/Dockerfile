@@ -14,7 +14,7 @@ RUN apt-get update \
       make git zsh curl ca-certificates clang sudo unzip xz-utils file procps perl \
  && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/zsh ko \
+RUN useradd -m -s /bin/zsh -G root ko \
  && echo 'ko ALL=(ALL) NOPASSWD: ALL' >/etc/sudoers.d/ko
 
 RUN set -eux; \
