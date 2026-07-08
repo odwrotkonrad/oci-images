@@ -6,9 +6,12 @@ Shared OCI container images for the `konradodwrot` repos.
 
 ## Images
 
-Both images are multi-arch (linux/arm64 + linux/amd64), same tags:
-`:vX.Y.Z` (immutable release consumers pin), `:latest` (moving),
-`:$CI_COMMIT_SHORT_SHA` (immutable).
+Both images build per arch, one CI job each: amd64 owns the bare tags
+(`:vX.Y.Z` immutable release consumers pin, `:latest` moving,
+`:$CI_COMMIT_SHORT_SHA` immutable), arm64 publishes the same set with an
+`-arm64` suffix. Only the amd64 ci-linux build is automatic; arm64 and all
+dev-sandbox builds are manual pipeline jobs (qemu-emulated arm64 builds are
+slow).
 
 ### ci-linux
 

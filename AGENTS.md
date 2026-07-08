@@ -7,9 +7,9 @@ Shared OCI container images: multi-arch ci-linux CI base, dev-sandbox config-bak
 
 ## What It Is
 
-Shared OCI container images for the `konradodwrot` repos, multi-arch
-(arm64 + amd64), built by Docker buildx and published to this project's
-container registry. Two images: `ci-linux`, a `debian:bookworm-slim` base
+Shared OCI container images for the `konradodwrot` repos, per-arch builds
+(amd64 bare tags, arm64 `-arm64` suffixed), built by Docker buildx and
+published to this project's container registry. Two images: `ci-linux`, a `debian:bookworm-slim` base
 baking the common CI toolchain (go, che, render-tpl, lefthook, yq, zsh, clang,
 make, git, zig, goreleaser, terraform, glab); `dev-sandbox`, built FROM
 `ci-linux`, cloning the public `configs` repo at a pinned SHA and running the
@@ -29,7 +29,7 @@ personal config, so local sandboxes pull a ready image instead of building one.
 
 - One shared, versioned CI base image every repo pulls.
 - One published config-baked dev image local sandboxes pull.
-- Multi-arch: arm64 + amd64, same tags.
+- Both arches: amd64 automatic (ci-linux), arm64 + dev-sandbox manual, `-arm64` tag suffix.
 - Single source of truth for CI tool versions (`ci/tool-versions.env`).
 - Public-pullable, so cross-project pulls need no auth.
 - Fast pipelines: no per-job compile of che, no per-job tool downloads.
