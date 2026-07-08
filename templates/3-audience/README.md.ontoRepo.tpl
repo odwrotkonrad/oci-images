@@ -7,12 +7,12 @@ Shared OCI container images for the `konradodwrot` repos.
 ## Images
 
 Both images are multi-arch (linux/arm64 + linux/amd64), same tags:
-`:vX.Y.Z` (immutable release consumers pin), `:bookworm` (moving pinned ref),
-`:latest` (moving), `:$CI_COMMIT_SHORT_SHA` (immutable).
+`:vX.Y.Z` (immutable release consumers pin), `:latest` (moving),
+`:$CI_COMMIT_SHORT_SHA` (immutable).
 
 ### ci-linux
 
-`registry.gitlab.com/konradodwrot/infra/oci-images/ci-linux:bookworm`
+`registry.gitlab.com/konradodwrot/infra/oci-images/ci-linux:latest`
 
 `FROM debian:bookworm-slim`, baking the shared CI toolchain so consuming jobs
 skip the per-pipeline `apt-get` + `go install` + `curl` bootstrap:
@@ -31,7 +31,7 @@ skip the per-pipeline `apt-get` + `go install` + `curl` bootstrap:
 
 ### dev-sandbox
 
-`registry.gitlab.com/konradodwrot/infra/oci-images/dev-sandbox:bookworm`
+`registry.gitlab.com/konradodwrot/infra/oci-images/dev-sandbox:latest`
 
 `FROM ci-linux` (same pipeline's build), cloning the public `configs` repo at a
 pinned SHA (`CONFIGS_SHA` build arg, current `main` head at build time) and
@@ -44,7 +44,7 @@ session pods.
 
 ```yaml
 variables:
-  CI_IMAGE: registry.gitlab.com/konradodwrot/infra/oci-images/ci-linux:bookworm
+  CI_IMAGE: registry.gitlab.com/konradodwrot/infra/oci-images/ci-linux:vX.Y.Z
 
 validate-pre-commit-all:
   image: $CI_IMAGE

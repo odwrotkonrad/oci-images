@@ -41,14 +41,13 @@ build-ci-linux-image:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - docker context create dind --docker "host=$DOCKER_HOST,ca=$DOCKER_CERT_PATH/ca.pem,cert=$DOCKER_CERT_PATH/cert.pem,key=$DOCKER_CERT_PATH/key.pem"
     - docker buildx create --use --driver docker-container dind
-    #[why] on a tag pipeline publish the immutable :vX.Y.Z consumers pin; else re-tag :bookworm as the version slot (harmless no-op)
-    - VERSION_TAG="${CI_COMMIT_TAG:-bookworm}"
+    #[why] on a tag pipeline publish the immutable :vX.Y.Z consumers pin; else re-tag :latest as the version slot (harmless no-op)
+    - VERSION_TAG="${CI_COMMIT_TAG:-latest}"
   script:
     - docker buildx build
         --file "$CI_PROJECT_DIR/ci/ci-linux/Dockerfile"
         --platform linux/arm64,linux/amd64
         --tag "$CI_LINUX_IMAGE:$VERSION_TAG"
-        --tag "$CI_LINUX_IMAGE:bookworm"
         --tag "$CI_LINUX_IMAGE:latest"
         --tag "$CI_LINUX_IMAGE:$CI_COMMIT_SHORT_SHA"
         --cache-from "type=registry,ref=$CI_LINUX_IMAGE-cache"
@@ -87,7 +86,7 @@ build-dev-sandbox-image:
     - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
     - docker context create dind --docker "host=$DOCKER_HOST,ca=$DOCKER_CERT_PATH/ca.pem,cert=$DOCKER_CERT_PATH/cert.pem,key=$DOCKER_CERT_PATH/key.pem"
     - docker buildx create --use --driver docker-container dind
-    - VERSION_TAG="${CI_COMMIT_TAG:-bookworm}"
+    - VERSION_TAG="${CI_COMMIT_TAG:-latest}"
     #[why] pin the baked configs checkout to the current main head: cache-busts on config change, records what was baked
     - CONFIGS_SHA=$(git ls-remote https://gitlab.com/konradodwrot/configs.git main | cut -f1)
   script:
@@ -97,7 +96,6 @@ build-dev-sandbox-image:
         --build-arg "BASE_IMAGE=$CI_LINUX_IMAGE:$VERSION_TAG"
         --build-arg "CONFIGS_SHA=$CONFIGS_SHA"
         --tag "$DEV_SANDBOX_IMAGE:$VERSION_TAG"
-        --tag "$DEV_SANDBOX_IMAGE:bookworm"
         --tag "$DEV_SANDBOX_IMAGE:latest"
         --tag "$DEV_SANDBOX_IMAGE:$CI_COMMIT_SHORT_SHA"
         --cache-from "type=registry,ref=$DEV_SANDBOX_IMAGE-cache"
@@ -129,7 +127,7 @@ validate-pre-commit-all:
 #[why] auto-tag vX.Y.Z on main; the tag pipeline rebuilds the image and publishes the immutable :vX.Y.Z consumers pin
 release:
   stage: release
-  image: $CI_LINUX_IMAGE:bookworm
+  image: $CI_LINUX_IMAGE:latest
   needs: []
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

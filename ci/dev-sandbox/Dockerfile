@@ -10,7 +10,7 @@ RUN set -eux; \
     git -C /home/ko/projects/gitlab/konradodwrot/configs checkout "$CONFIGS_SHA"; \
     chown -R ko:ko /home/ko/projects/gitlab/konradodwrot
 
-RUN sudo -u ko -H sh -c 'cd /home/ko/projects/gitlab/konradodwrot/configs && CI=1 MK_DRY_RUN_RENDER_SECRETS=true CHE_PROFILE=cli/linux make run-sync-full'
+RUN sudo -u ko -H sh -c 'cd /home/ko/projects/gitlab/konradodwrot/configs && CI=1 container=docker MK_DRY_RUN_RENDER_SECRETS=true CHE_PROFILE=cli/linux make run-sync-full'
 
 USER ko
 WORKDIR /home/ko
