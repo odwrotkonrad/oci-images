@@ -1,6 +1,6 @@
-# ci-images
+# oci-images
 
-Shared CI container images: linux base bundling go, che, render-tpl, lefthook, yq, zig, goreleaser, terraform, glab.
+Shared OCI container images: multi-arch ci-linux CI base, dev-sandbox config-baked dev image.
 
 @assets/docs-agents/purpose.md
 

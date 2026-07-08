@@ -3,6 +3,8 @@ assets
   data
   docs-agents
 ci
+  ci-linux
+  dev-sandbox
 templates
   2-data
   3-audience
