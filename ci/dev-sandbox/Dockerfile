@@ -2,17 +2,20 @@
 ARG BASE_IMAGE
 FROM $BASE_IMAGE
 
-ARG CONFIGS_SHA
+ARG SANDBOX_USER=ko
+
+RUN useradd -m -s /bin/zsh -G root "$SANDBOX_USER" \
+ && echo "$SANDBOX_USER ALL=(ALL) NOPASSWD: ALL" >"/etc/sudoers.d/$SANDBOX_USER"
+
+USER $SANDBOX_USER
+WORKDIR /home/$SANDBOX_USER
 
 RUN set -eux; \
-    mkdir -p /home/ko/projects/gitlab/konradodwrot; \
-    git clone https://gitlab.com/konradodwrot/configs.git /home/ko/projects/gitlab/konradodwrot/configs; \
-    git -C /home/ko/projects/gitlab/konradodwrot/configs checkout "$CONFIGS_SHA"; \
-    chown -R ko:ko /home/ko/projects/gitlab/konradodwrot
+    mkdir -p ~/projects/gitlab/konradodwrot; \
+    git clone https://gitlab.com/konradodwrot/configs.git ~/projects/gitlab/konradodwrot/configs
 
-RUN sudo -u ko -H sh -c 'cd /home/ko/projects/gitlab/konradodwrot/configs && CI=1 container=docker MK_DRY_RUN_RENDER_SECRETS=true CHE_PROFILE=cli/linux make run-sync-full'
+RUN cd ~/projects/gitlab/konradodwrot/configs \
+ && CI=1 container=docker MK_DRY_RUN_RENDER_SECRETS=true CHE_PROFILE=cli/linux make run-sync-full
 
-USER ko
-WORKDIR /home/ko
 CMD ["zsh", "-l"]
 ##[<] 🤖🤖

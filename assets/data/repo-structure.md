@@ -5,6 +5,8 @@ assets
 ci
   ci-linux
   dev-sandbox
+  zsh
+    scripts
 templates
   2-data
   3-audience

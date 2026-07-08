@@ -14,9 +14,6 @@ RUN apt-get update \
       make git zsh curl ca-certificates clang sudo unzip xz-utils file procps perl \
  && rm -rf /var/lib/apt/lists/*
 
-RUN useradd -m -s /bin/zsh ko \
- && echo 'ko ALL=(ALL) NOPASSWD: ALL' >/etc/sudoers.d/ko
-
 RUN set -eux; \
     . /tmp/tool-versions.env; \
     arch="$(dpkg --print-architecture)"; \
