@@ -45,6 +45,19 @@ RUN set -eux; \
     echo "${yqsha}  /usr/local/bin/yq" | sha256sum -c -; \
     chmod +x /usr/local/bin/yq
 
+RUN set -eux; \
+    . /tmp/tool-versions.env; \
+    arch="$(dpkg --print-architecture)"; \
+    case "$arch" in \
+      amd64) gclplat=linux-amd64; gclsha="$GOLANGCI_LINT_SHA256_LINUX_AMD64" ;; \
+      arm64) gclplat=linux-arm64; gclsha="$GOLANGCI_LINT_SHA256_LINUX_ARM64" ;; \
+      *) echo "unsupported arch: $arch" >&2; exit 1 ;; \
+    esac; \
+    curl -fsSL -o /tmp/golangci-lint.tar.gz "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-${gclplat}.tar.gz"; \
+    echo "${gclsha}  /tmp/golangci-lint.tar.gz" | sha256sum -c -; \
+    tar -xz -C /usr/local/bin --strip-components=1 -f /tmp/golangci-lint.tar.gz "golangci-lint-${GOLANGCI_LINT_VERSION}-${gclplat}/golangci-lint"; \
+    rm /tmp/golangci-lint.tar.gz
+
 #[why] prebuilt tarballs from the package registry, not go install: skip che's slow CGO build (tree-sitter + 1Password sdk)
 RUN set -eux; \
     . /tmp/tool-versions.env; \

@@ -11,7 +11,7 @@ Shared OCI container images for the `konradodwrot` repos, per-arch builds
 (amd64 bare tags, arm64 `-arm64` suffixed), built by Docker buildx and
 published to this project's container registry. Two images: `ci-linux`, a `debian:bookworm-slim` base
 baking the common CI toolchain (go, che, render-tpl, lefthook, yq, zsh, clang,
-make, git, zig, goreleaser, terraform, glab); `dev-sandbox`, built FROM
+make, git, zig, goreleaser, golangci-lint, terraform, glab); `dev-sandbox`, built FROM
 `ci-linux`, cloning the public `configs` repo at a pinned SHA and running the
 full che install (`run-sync-full`, cli/linux profile, op:// secret renders
 skipped), a ready config-baked dev shell.
