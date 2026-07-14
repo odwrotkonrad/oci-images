@@ -14,8 +14,11 @@ RUN set -eux; \
     mkdir -p ~/projects/gitlab/konradodwrot; \
     git clone https://gitlab.com/konradodwrot/configs.git ~/projects/gitlab/konradodwrot/configs
 
+#[why] CHE_OTEL_ENABLED=false: no otel collector exists during the image build, so che's exporter would spew "connect: connection refused" to the baked localhost:4317 on every op. master-disable telemetry for the build (runtime sessions re-enable via CHE_OTEL_ENDPOINT -> sandbox-otelcol)
 RUN cd ~/projects/gitlab/konradodwrot/configs \
- && CI=1 container=docker MK_DRY_RUN_RENDER_SECRETS=true CHE_PROFILE=cli/linux make run-sync-full
+ && CI=1 container=docker MK_DRY_RUN_RENDER_SECRETS=true CHE_PROFILE=cli/linux \
+    CHE_OTEL_ENABLED=false \
+    make run-sync-full
 
 CMD ["zsh", "-l"]
 ##[<] 🤖🤖
