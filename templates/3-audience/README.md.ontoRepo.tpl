@@ -52,7 +52,7 @@ variables:
 validate-pre-commit-all:
   image: $CI_IMAGE
   script:
-    - make run-repo-ci-precommit-all
+    - make repo-ci-precommit-all
 ```
 
 The images are public-pullable (public repo), so cross-project pulls need no auth.
