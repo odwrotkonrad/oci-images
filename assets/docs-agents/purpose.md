@@ -8,7 +8,7 @@ published to this project's container registry. Two images: `ci-linux`, a `debia
 baking the common CI toolchain (go, che, render-tpl, lefthook, yq, zsh, clang,
 make, git, zig, goreleaser, golangci-lint, terraform, glab); `dev-sandbox`, built FROM
 `ci-linux`, cloning the public `configs` repo at a pinned SHA and running the
-full che install (`run-sync-full`, cli/linux profile, op:// secret renders
+full che install (`sync-install`, cli/linux profile, op:// secret renders
 skipped), a ready config-baked dev shell.
 
 ## Why It Exists

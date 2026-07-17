@@ -159,7 +159,7 @@ validate-pre-commit-all:
     - mkdir -p ~/.config/lefthook
     - '[ -f ~/.config/lefthook/lefthook.yml ] || printf "min_version: 2.1.9\n" > ~/.config/lefthook/lefthook.yml'
   script:
-    - make run-repo-ci-precommit-all
+    - make repo-ci-precommit-all
     - git diff --exit-code HEAD
 
 #[why] auto-tag vX.Y.Z on main; the tag pipeline rebuilds the image and publishes the immutable :vX.Y.Z consumers pin

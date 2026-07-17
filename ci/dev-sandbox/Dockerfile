@@ -18,7 +18,7 @@ RUN set -eux; \
 RUN cd ~/projects/gitlab/konradodwrot/configs \
  && CI=1 container=docker MK_DRY_RUN_RENDER_SECRETS=true CHE_PROFILE=cli/linux \
     CHE_OTEL_ENABLED=false \
-    make run-sync-full
+    make sync-install
 
 CMD ["zsh", "-l"]
 ##[<] 🤖🤖

@@ -38,7 +38,7 @@ skip the per-pipeline `apt-get` + `go install` + `curl` bootstrap:
 
 `FROM ci-linux` (same pipeline's build), cloning the public `configs` repo at
 its current `main` head (built `--no-cache` so the clone is always fresh) and
-running the full che install: `run-sync-full`, `cli/linux` profile, op://
+running the full che install: `sync-install`, `cli/linux` profile, op://
 secret renders skipped. The result is a ready config-baked dev shell (zsh,
 che-loaded dotfiles, no secrets), pulled by the `sandbox` repo for local
 session pods.
@@ -52,7 +52,7 @@ variables:
 validate-pre-commit-all:
   image: $CI_IMAGE
   script:
-    - make run-repo-ci-precommit-all
+    - make repo-ci-precommit-all
 ```
 
 The images are public-pullable (public repo), so cross-project pulls need no auth.

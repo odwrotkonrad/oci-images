@@ -3,16 +3,16 @@
 
 ### Environment Variables:
 
-`BASE_IMAGE=image ref` dev-sandbox base image ref, unset -> ci-linux:local (built by run-image-build-ci-linux)
+`BASE_IMAGE=image ref` dev-sandbox base image ref, unset -> ci-linux:local (built by image-build-ci-linux)
 
 ### Wrappers:
 
-`run-image-build-all`: `run-image-build-ci-linux -> run-image-build-dev-sandbox` build both images for the host arch: ci-linux:local, then dev-sandbox:local FROM it
+`image-build-all`: `image-build-ci-linux -> image-build-dev-sandbox` build both images for the host arch: ci-linux:local, then dev-sandbox:local FROM it
 
 ### Images:
 
-`run-image-build-ci-linux` build ci-linux:local for the host arch
-`run-image-build-dev-sandbox` build dev-sandbox:local for the host arch (BASE_IMAGE base, configs main baked fresh)
+`image-build-ci-linux` build ci-linux:local for the host arch
+`image-build-dev-sandbox` build dev-sandbox:local for the host arch (BASE_IMAGE base, configs main baked fresh)
 
 ### Docs:
 
@@ -20,5 +20,5 @@
 
 ### CI:
 
-`run-repo-ci-prepare-hooks` install lefthook git hooks
-`run-repo-ci-precommit-all`: `run-repo-ci-prepare-hooks` run pre-commit hooks over all files (not just staged)
+`repo-ci-prepare-hooks` install lefthook git hooks
+`repo-ci-precommit-all`: `repo-ci-prepare-hooks` run pre-commit hooks over all files (not just staged)
