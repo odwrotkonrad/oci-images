@@ -116,12 +116,13 @@ build-dev-sandbox-image-amd64:
     - job: build-ci-linux-image-amd64
       optional: true
   script:
-    #[why] no-cache: the clone layer must fetch fresh configs; a cached layer would silently bake a stale checkout
+    #[why] configs main SHA -> CONFIGS_REF build-arg: busts the clone + sync-install layers only when configs main moved (unchanged configs keeps the cached layers), no --no-cache
+    - CONFIGS_REF="$(git ls-remote https://gitlab.com/konradodwrot/configs.git refs/heads/main | cut -f1)"
     - docker buildx build
-        --no-cache
         --file "$CI_PROJECT_DIR/ci/dev-sandbox/Dockerfile"
         --platform linux/amd64
         --build-arg "BASE_IMAGE=$CI_LINUX_IMAGE:$VERSION_TAG"
+        --build-arg "CONFIGS_REF=$CONFIGS_REF"
         --tag "$DEV_SANDBOX_IMAGE:$VERSION_TAG"
         --tag "$DEV_SANDBOX_IMAGE:latest"
         --tag "$DEV_SANDBOX_IMAGE:$CI_COMMIT_SHORT_SHA"
@@ -134,9 +135,12 @@ build-dev-sandbox-image-arm64:
     - job: build-ci-linux-image-arm64
       optional: true
   script:
+    #[why] configs main SHA -> CONFIGS_REF build-arg: busts the clone + sync-install layers only when configs main moved (unchanged configs keeps the cached layers)
+    - CONFIGS_REF="$(git ls-remote https://gitlab.com/konradodwrot/configs.git refs/heads/main | cut -f1)"
     - sudo docker build
         --file "$CI_PROJECT_DIR/ci/dev-sandbox/Dockerfile"
         --build-arg "BASE_IMAGE=$CI_LINUX_IMAGE:$VERSION_TAG-arm64"
+        --build-arg "CONFIGS_REF=$CONFIGS_REF"
         --tag "$DEV_SANDBOX_IMAGE:$VERSION_TAG-arm64"
         --tag "$DEV_SANDBOX_IMAGE:latest-arm64"
         --tag "$DEV_SANDBOX_IMAGE:$CI_COMMIT_SHORT_SHA-arm64"
