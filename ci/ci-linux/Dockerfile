@@ -61,16 +61,14 @@ RUN set -eux; \
 #[why] prebuilt tarballs from the package registry, not go install: skip che's slow CGO build (tree-sitter + 1Password sdk)
 #   one che tarball bundles che + render-tpl (one fetch, one checksum)
 RUN set -eux; \
-    . /tmp/tool-versions.env; \
     arch="$(dpkg --print-architecture)"; \
     case "$arch" in \
-      amd64) plat=linux_amd64; chesha="$CHE_SHA256_LINUX_AMD64" ;; \
-      arm64) plat=linux_arm64; chesha="$CHE_SHA256_LINUX_ARM64" ;; \
+      amd64) plat=linux_amd64 ;; \
+      arm64) plat=linux_arm64 ;; \
       *) echo "unsupported arch: $arch" >&2; exit 1 ;; \
     esac; \
-    che_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che/${CHE_VERSION}"; \
-    curl -fsSL -o /tmp/che.tar.gz "${che_base}/che_${CHE_VERSION}_${plat}.tar.gz"; \
-    echo "${chesha}  /tmp/che.tar.gz" | sha256sum -c -; \
+    che_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che/latest"; \
+    curl -fsSL -o /tmp/che.tar.gz "${che_base}/che_latest_${plat}.tar.gz"; \
     tar -xz -C /usr/local/bin -f /tmp/che.tar.gz che render-tpl; \
     rm /tmp/che.tar.gz
 

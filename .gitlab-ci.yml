@@ -149,9 +149,8 @@ validate-pre-commit-all:
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends make zsh git curl ca-certificates
     - export $(grep -vE '^\s*(#|$)' ci/tool-versions.env | xargs)
-    - che_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che/${CHE_VERSION}"
-    - curl -fsSL -o /tmp/che.tar.gz "${che_base}/che_${CHE_VERSION}_linux_amd64.tar.gz"
-    - echo "${CHE_SHA256_LINUX_AMD64}  /tmp/che.tar.gz" | sha256sum -c -
+    - che_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che/latest"
+    - curl -fsSL -o /tmp/che.tar.gz "${che_base}/che_latest_linux_amd64.tar.gz"
     - tar -xz -C /usr/local/bin -f /tmp/che.tar.gz che
     - curl -fsSL -o /usr/local/bin/lefthook "https://github.com/evilmartians/lefthook/releases/download/v${LEFTHOOK_VERSION}/lefthook_${LEFTHOOK_VERSION}_Linux_x86_64"
     - echo "${LEFTHOOK_SHA256_LINUX_AMD64}  /usr/local/bin/lefthook" | sha256sum -c -
