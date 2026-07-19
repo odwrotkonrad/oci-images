@@ -11,11 +11,13 @@ typeset base=${BASE_IMAGE:-ci-linux:local}
 
 (( $+commands[docker] )) || fn-exit-with 1 "${0:t}: docker not found"
 
-#[why] no-cache: the clone layer must fetch fresh configs; a cached layer would silently bake a stale checkout
+#[why] configs main SHA -> CONFIGS_REF: busts the clone + sync-install layers only when configs main moved (unchanged configs keeps the cached layers)
+typeset configs_ref=$(git ls-remote https://gitlab.com/konradodwrot/configs.git refs/heads/main | cut -f1)
+
 docker build \
-  --no-cache \
   --file $repo_root/ci/dev-sandbox/Dockerfile \
   --build-arg BASE_IMAGE=$base \
+  --build-arg CONFIGS_REF=$configs_ref \
   --tag dev-sandbox:local \
   $repo_root
 ##[<] 🤖🤖

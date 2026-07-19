@@ -59,18 +59,19 @@ RUN set -eux; \
     rm /tmp/golangci-lint.tar.gz
 
 #[why] prebuilt tarballs from the package registry, not go install: skip che's slow CGO build (tree-sitter + 1Password sdk)
-#   one che tarball bundles che + render-tpl (one fetch, one checksum)
+#   one che tarball bundles che + render-tpl (one fetch, no checksum: latest alias)
+#[why] CHE_REF busts this layer only when the latest che tarball changed: CI passes its etag, so an unchanged che keeps the cached layer, a new che re-runs the fetch
+ARG CHE_REF=latest
 RUN set -eux; \
-    . /tmp/tool-versions.env; \
+    : "${CHE_REF}"; \
     arch="$(dpkg --print-architecture)"; \
     case "$arch" in \
-      amd64) plat=linux_amd64; chesha="$CHE_SHA256_LINUX_AMD64" ;; \
-      arm64) plat=linux_arm64; chesha="$CHE_SHA256_LINUX_ARM64" ;; \
+      amd64) plat=linux_amd64 ;; \
+      arm64) plat=linux_arm64 ;; \
       *) echo "unsupported arch: $arch" >&2; exit 1 ;; \
     esac; \
-    che_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che/${CHE_VERSION}"; \
-    curl -fsSL -o /tmp/che.tar.gz "${che_base}/che_${CHE_VERSION}_${plat}.tar.gz"; \
-    echo "${chesha}  /tmp/che.tar.gz" | sha256sum -c -; \
+    che_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che/latest"; \
+    curl -fsSL -o /tmp/che.tar.gz "${che_base}/che_latest_${plat}.tar.gz"; \
     tar -xz -C /usr/local/bin -f /tmp/che.tar.gz che render-tpl; \
     rm /tmp/che.tar.gz
 

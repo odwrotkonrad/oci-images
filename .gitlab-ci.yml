@@ -13,6 +13,7 @@ stages:
 variables:
   CI_LINUX_IMAGE: $CI_REGISTRY_IMAGE/ci-linux
   DEV_SANDBOX_IMAGE: $CI_REGISTRY_IMAGE/dev-sandbox
+  CHE_VALIDATE_SPEC: error
 
 #[why] one job per arch: qemu-emulated arm64 in one multi-arch build doubles the wall clock; arm64 jobs are manual, amd64 ci-linux is the only automatic build. arm64 pushes -arm64 suffixed tags (a single-arch push to a shared tag would clobber the other arch's manifest)
 .build-image:
@@ -31,6 +32,8 @@ variables:
     - docker buildx create --use --driver docker-container dind
     #[why] on a tag pipeline publish the immutable :vX.Y.Z consumers pin; else re-tag :latest as the version slot (harmless no-op)
     - VERSION_TAG="${CI_COMMIT_TAG:-latest}"
+    #[why] etag of the latest che tarball -> CHE_REF build-arg: busts the Dockerfile che layer only when che re-published (unchanged che keeps the cached layer). wget not curl: the docker:27-cli job image is alpine/busybox (no curl)
+    - CHE_REF="$(wget -S --spider -q -O /dev/null "https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che/latest/che_latest_linux_amd64.tar.gz" 2>&1 | tr -d '\r' | awk 'tolower($1)=="etag:"{print $2}')"
 
 build-ci-linux-image-amd64:
   extends: .build-image
@@ -51,6 +54,7 @@ build-ci-linux-image-amd64:
     - docker buildx build
         --file "$CI_PROJECT_DIR/ci/ci-linux/Dockerfile"
         --platform linux/amd64
+        --build-arg "CHE_REF=$CHE_REF"
         --tag "$CI_LINUX_IMAGE:$VERSION_TAG"
         --tag "$CI_LINUX_IMAGE:latest"
         --tag "$CI_LINUX_IMAGE:$CI_COMMIT_SHORT_SHA"
@@ -72,6 +76,7 @@ build-ci-linux-image-arm64:
     - docker buildx build
         --file "$CI_PROJECT_DIR/ci/ci-linux/Dockerfile"
         --platform linux/arm64
+        --build-arg "CHE_REF=$CHE_REF"
         --tag "$CI_LINUX_IMAGE:$VERSION_TAG-arm64"
         --tag "$CI_LINUX_IMAGE:latest-arm64"
         --tag "$CI_LINUX_IMAGE:$CI_COMMIT_SHORT_SHA-arm64"
@@ -112,12 +117,13 @@ build-dev-sandbox-image-amd64:
     - job: build-ci-linux-image-amd64
       optional: true
   script:
-    #[why] no-cache: the clone layer must fetch fresh configs; a cached layer would silently bake a stale checkout
+    #[why] configs main SHA -> CONFIGS_REF build-arg: busts the clone + sync-install layers only when configs main moved (unchanged configs keeps the cached layers), no --no-cache
+    - CONFIGS_REF="$(git ls-remote https://gitlab.com/konradodwrot/configs.git refs/heads/main | cut -f1)"
     - docker buildx build
-        --no-cache
         --file "$CI_PROJECT_DIR/ci/dev-sandbox/Dockerfile"
         --platform linux/amd64
         --build-arg "BASE_IMAGE=$CI_LINUX_IMAGE:$VERSION_TAG"
+        --build-arg "CONFIGS_REF=$CONFIGS_REF"
         --tag "$DEV_SANDBOX_IMAGE:$VERSION_TAG"
         --tag "$DEV_SANDBOX_IMAGE:latest"
         --tag "$DEV_SANDBOX_IMAGE:$CI_COMMIT_SHORT_SHA"
@@ -130,9 +136,12 @@ build-dev-sandbox-image-arm64:
     - job: build-ci-linux-image-arm64
       optional: true
   script:
+    #[why] configs main SHA -> CONFIGS_REF build-arg: busts the clone + sync-install layers only when configs main moved (unchanged configs keeps the cached layers)
+    - CONFIGS_REF="$(git ls-remote https://gitlab.com/konradodwrot/configs.git refs/heads/main | cut -f1)"
     - sudo docker build
         --file "$CI_PROJECT_DIR/ci/dev-sandbox/Dockerfile"
         --build-arg "BASE_IMAGE=$CI_LINUX_IMAGE:$VERSION_TAG-arm64"
+        --build-arg "CONFIGS_REF=$CONFIGS_REF"
         --tag "$DEV_SANDBOX_IMAGE:$VERSION_TAG-arm64"
         --tag "$DEV_SANDBOX_IMAGE:latest-arm64"
         --tag "$DEV_SANDBOX_IMAGE:$CI_COMMIT_SHORT_SHA-arm64"
@@ -149,9 +158,8 @@ validate-pre-commit-all:
   before_script:
     - apt-get update && apt-get install -y --no-install-recommends make zsh git curl ca-certificates
     - export $(grep -vE '^\s*(#|$)' ci/tool-versions.env | xargs)
-    - che_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che/${CHE_VERSION}"
-    - curl -fsSL -o /tmp/che.tar.gz "${che_base}/che_${CHE_VERSION}_linux_amd64.tar.gz"
-    - echo "${CHE_SHA256_LINUX_AMD64}  /tmp/che.tar.gz" | sha256sum -c -
+    - che_base="https://gitlab.com/api/v4/projects/konradodwrot%2Fgo-modules/packages/generic/che/latest"
+    - curl -fsSL -o /tmp/che.tar.gz "${che_base}/che_latest_linux_amd64.tar.gz"
     - tar -xz -C /usr/local/bin -f /tmp/che.tar.gz che
     - curl -fsSL -o /usr/local/bin/lefthook "https://github.com/evilmartians/lefthook/releases/download/v${LEFTHOOK_VERSION}/lefthook_${LEFTHOOK_VERSION}_Linux_x86_64"
     - echo "${LEFTHOOK_SHA256_LINUX_AMD64}  /usr/local/bin/lefthook" | sha256sum -c -
