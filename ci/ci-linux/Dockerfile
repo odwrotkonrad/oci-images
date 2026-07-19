@@ -11,7 +11,7 @@ ENV TF_PLUGIN_CACHE_DIR=/usr/local/terraform.d/plugin-cache
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-      make git zsh curl ca-certificates clang sudo unzip xz-utils file procps perl \
+      make git zsh curl ca-certificates clang sudo unzip xz-utils bzip2 file procps perl \
  && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
